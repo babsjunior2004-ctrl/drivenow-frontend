@@ -1,16 +1,43 @@
+import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useReservations } from "../contexts/ReservationContext";
 import { motion } from "framer-motion";
 
+const statusLabel = (status: string) => {
+  if (status === "PENDING") return "En attente";
+  if (status === "CONFIRMED") return "Confirmée";
+  if (status === "CANCELLED") return "Annulée";
+  return status;
+};
+
+const statusClass = (status: string) => {
+  if (status === "PENDING")
+    return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
+  if (status === "CONFIRMED")
+    return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+  return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
+};
+
 const Reservations = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { reservations, cancelReservation } = useReservations();
+  const { reservations, cancelReservation, fetchMyReservations, loading } =
+    useReservations();
+
+  useEffect(() => {
+    fetchMyReservations();
+  }, [fetchMyReservations]);
 
   const handleLogout = () => {
     logout();
     navigate("/");
+  };
+
+  const handleCancel = async (id: number) => {
+    if (window.confirm("Voulez-vous vraiment annuler cette réservation ?")) {
+      await cancelReservation(id);
+    }
   };
 
   return (
@@ -94,11 +121,11 @@ const Reservations = () => {
             <div className="flex items-center space-x-4">
               <div className="hidden md:flex items-center space-x-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                  {user?.name?.charAt(0)?.toUpperCase()}
+                  {user?.firstName?.charAt(0)?.toUpperCase()}
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {user?.name}
+                    {user?.firstName} {user?.lastName}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {user?.email}
@@ -141,7 +168,11 @@ const Reservations = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
         >
-          {reservations.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+              Chargement de vos réservations...
+            </div>
+          ) : reservations.length === 0 ? (
             <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-12 text-center">
               <div className="mb-4">
                 <svg
@@ -162,7 +193,7 @@ const Reservations = () => {
                 Vous n'avez aucune réservation pour le moment.
               </p>
               <Link
-                to="/"
+                to="/cars"
                 className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg hover:shadow-lg transition-all duration-300 font-semibold"
               >
                 Réserver une voiture
@@ -203,13 +234,13 @@ const Reservations = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <img
-                              src={reservation.car.image}
-                              alt={reservation.car.name}
+                              src={reservation.car.imageUrl}
+                              alt={reservation.car.model}
                               className="w-12 h-12 rounded-lg mr-3 object-cover"
                             />
                             <div>
                               <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                                {reservation.car.brand} {reservation.car.name}
+                                {reservation.car.brand} {reservation.car.model}
                               </div>
                             </div>
                           </div>
@@ -221,32 +252,24 @@ const Reservations = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {reservation.totalPrice.toLocaleString()} FCFA
+                            {Number(reservation.totalPrice).toLocaleString()} FCFA
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                              reservation.status === "active"
-                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                                : reservation.status === "completed"
-                                  ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                                  : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-                            }`}
+                            className={`px-3 py-1 text-xs font-semibold rounded-full ${statusClass(
+                              reservation.status,
+                            )}`}
                           >
-                            {reservation.status === "active"
-                              ? "Active"
-                              : reservation.status === "completed"
-                                ? "Terminée"
-                                : "Annulée"}
+                            {statusLabel(reservation.status)}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          {reservation.status === "active" && (
+                          {reservation.status !== "CANCELLED" && (
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => cancelReservation(reservation.id)}
+                              onClick={() => handleCancel(reservation.id)}
                               className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-semibold text-sm transition-colors"
                             >
                               Annuler

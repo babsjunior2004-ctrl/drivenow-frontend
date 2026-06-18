@@ -4,24 +4,34 @@ import { useAuth } from "../contexts/AuthContext";
 import { motion } from "framer-motion";
 
 const Register = () => {
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
     if (password !== confirmPassword) {
       setError("Les mots de passe ne correspondent pas");
       return;
     }
-    if (register(name, email, password)) {
+
+    setLoading(true);
+    const success = await register(firstName, lastName, email, password, phone);
+    setLoading(false);
+
+    if (success) {
       navigate("/dashboard");
     } else {
-      setError("Erreur lors de l'inscription");
+      setError("Erreur lors de l'inscription. Cet email est peut-être déjà utilisé.");
     }
   };
 
@@ -60,21 +70,40 @@ const Register = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label
-              className="block text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2"
-              htmlFor="name"
-            >
-              Nom complet
-            </label>
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
-              required
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                className="block text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2"
+                htmlFor="firstName"
+              >
+                Prénom
+              </label>
+              <input
+                type="text"
+                id="firstName"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                required
+              />
+            </div>
+
+            <div>
+              <label
+                className="block text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2"
+                htmlFor="lastName"
+              >
+                Nom
+              </label>
+              <input
+                type="text"
+                id="lastName"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                required
+              />
+            </div>
           </div>
 
           <div>
@@ -97,6 +126,23 @@ const Register = () => {
           <div>
             <label
               className="block text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2"
+              htmlFor="phone"
+            >
+              Téléphone
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+221771234567"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+            />
+          </div>
+
+          <div>
+            <label
+              className="block text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2"
               htmlFor="password"
             >
               Mot de passe
@@ -108,6 +154,7 @@ const Register = () => {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
               required
+              minLength={6}
             />
           </div>
 
@@ -125,16 +172,18 @@ const Register = () => {
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
               required
+              minLength={6}
             />
           </div>
 
           <motion.button
             type="submit"
+            disabled={loading}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white font-semibold py-4 rounded-xl hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300"
+            className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white font-semibold py-4 rounded-xl hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            S'inscrire
+            {loading ? "Inscription en cours..." : "S'inscrire"}
           </motion.button>
         </form>
 

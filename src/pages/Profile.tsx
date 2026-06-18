@@ -2,18 +2,45 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { motion } from "framer-motion";
+import AdminNav from "../components/AdminNav";
 
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateProfile, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(user?.name || "");
+  const [firstName, setFirstName] = useState(user?.firstName || "");
+  const [lastName, setLastName] = useState(user?.lastName || "");
   const [email, setEmail] = useState(user?.email || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const handleSave = () => {
-    // Simulation de sauvegarde
+  const handleSave = async () => {
+    setError("");
+    setSuccess("");
+    setSaving(true);
+    try {
+      const ok = await updateProfile({ firstName, lastName, email, phone });
+      if (ok) {
+        setIsEditing(false);
+        setSuccess("Profil mis à jour avec succès !");
+        setTimeout(() => setSuccess(""), 4000);
+      }
+    } catch (err: any) {
+      setError(err.message || "Erreur lors de la mise à jour du profil");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setFirstName(user?.firstName || "");
+    setLastName(user?.lastName || "");
+    setEmail(user?.email || "");
+    setPhone(user?.phone || "");
+    setError("");
     setIsEditing(false);
-    alert("Profil mis à jour !");
   };
 
   const handleLogout = () => {
@@ -44,7 +71,11 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-900 dark:to-gray-800">
-      {/* Top Navigation Bar */}
+      {isAdmin ? (
+        <AdminNav />
+      ) : (
+        <>
+          {/* Top Navigation Bar */}
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
@@ -123,11 +154,11 @@ const Profile = () => {
             <div className="flex items-center space-x-4">
               <div className="hidden md:flex items-center space-x-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                  {user?.name?.charAt(0)?.toUpperCase()}
+                  {user?.firstName?.charAt(0)?.toUpperCase()}
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {user?.name}
+                    {user?.firstName} {user?.lastName}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {user?.email}
@@ -146,6 +177,8 @@ const Profile = () => {
           </div>
         </div>
       </motion.nav>
+        </>
+      )}
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
@@ -172,19 +205,18 @@ const Profile = () => {
           className="grid grid-cols-1 lg:grid-cols-3 gap-8"
         >
           {/* Main Profile Card */}
-          <motion.div
-            variants={itemVariants}
-            className="lg:col-span-2"
-          >
+          <motion.div variants={itemVariants} className="lg:col-span-2">
             <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
               {/* Header with Avatar */}
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-white">
                 <div className="flex items-end space-x-4">
                   <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-4xl font-bold">
-                    {user?.name?.charAt(0)?.toUpperCase()}
+                    {user?.firstName?.charAt(0)?.toUpperCase()}
                   </div>
                   <div>
-                    <h2 className="text-3xl font-bold">{user?.name}</h2>
+                    <h2 className="text-3xl font-bold">
+                      {user?.firstName} {user?.lastName}
+                    </h2>
                     <p className="text-blue-100">{user?.email}</p>
                   </div>
                 </div>
@@ -199,7 +231,9 @@ const Profile = () => {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => setIsEditing(!isEditing)}
+                    onClick={() =>
+                      isEditing ? handleCancelEdit() : setIsEditing(true)
+                    }
                     className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
                       isEditing
                         ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
@@ -210,28 +244,64 @@ const Profile = () => {
                   </motion.button>
                 </div>
 
+                {error && (
+                  <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl">
+                    {error}
+                  </div>
+                )}
+
+                {success && (
+                  <div className="mb-6 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 rounded-xl">
+                    {success}
+                  </div>
+                )}
+
                 <div className="space-y-6">
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Nom complet
-                    </label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
-                      />
-                    ) : (
-                      <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-gray-900 dark:text-white font-medium">
-                        {name}
-                      </div>
-                    )}
-                  </motion.div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Prénom
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                        />
+                      ) : (
+                        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-gray-900 dark:text-white font-medium">
+                          {firstName}
+                        </div>
+                      )}
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Nom
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                        />
+                      ) : (
+                        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-gray-900 dark:text-white font-medium">
+                          {lastName}
+                        </div>
+                      )}
+                    </motion.div>
+                  </div>
 
                   <motion.div
                     initial={{ opacity: 0 }}
@@ -254,6 +324,28 @@ const Profile = () => {
                       </div>
                     )}
                   </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.7 }}
+                  >
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Téléphone
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                      />
+                    ) : (
+                      <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-gray-900 dark:text-white font-medium">
+                        {phone || "Non renseigné"}
+                      </div>
+                    )}
+                  </motion.div>
                 </div>
 
                 {isEditing && (
@@ -266,14 +358,15 @@ const Profile = () => {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={handleSave}
-                      className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300"
+                      disabled={saving}
+                      className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 disabled:opacity-50"
                     >
-                      Sauvegarder les modifications
+                      {saving ? "Sauvegarde..." : "Sauvegarder les modifications"}
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => setIsEditing(false)}
+                      onClick={handleCancelEdit}
                       className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white py-3 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                     >
                       Annuler
@@ -291,10 +384,7 @@ const Profile = () => {
                 Actions rapides
               </h3>
               <div className="space-y-3">
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Link
                     to="/dashboard"
                     className="block w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 rounded-xl hover:shadow-lg transition-all duration-300 font-semibold text-center"
@@ -302,10 +392,7 @@ const Profile = () => {
                     📊 Tableau de bord
                   </Link>
                 </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Link
                     to="/reservations"
                     className="block w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 py-3 rounded-xl hover:shadow-lg transition-all duration-300 font-semibold text-center"
@@ -313,10 +400,7 @@ const Profile = () => {
                     📅 Mes réservations
                   </Link>
                 </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Link
                     to="/"
                     className="block w-full bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-3 rounded-xl hover:shadow-lg transition-all duration-300 font-semibold text-center"
@@ -333,15 +417,9 @@ const Profile = () => {
                 </h4>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Statut</span>
+                    <span className="text-gray-600 dark:text-gray-400">Rôle</span>
                     <span className="font-semibold text-green-600 dark:text-green-400">
-                      Actif
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Membre depuis</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
-                      2024
+                      {user?.role === "ADMIN" ? "Administrateur" : "Client"}
                     </span>
                   </div>
                 </div>

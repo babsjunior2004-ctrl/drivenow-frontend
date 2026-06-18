@@ -1,26 +1,34 @@
-import React, { createContext, useContext, useState } from "react";
-import type { ReactNode } from "react";
+// =====================================================
+// src/contexts/AuthContext.tsx
+// Utilise le backend NestJS via api.ts
+// =====================================================
 
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  password: string; // Pour la simulation de réinitialisation
-}
-
-interface UserWithoutPassword {
-  id: number;
-  name: string;
-  email: string;
-}
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
+import { authApi, usersApi, type AuthUser } from '../services/api';
 
 interface AuthContextType {
-  user: UserWithoutPassword | null;
-  login: (email: string, password: string) => boolean;
-  register: (name: string, email: string, password: string) => boolean;
+  user: AuthUser | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (
+    firstName: string,
+    lastName: string,
+    email: string,
+    password: string,
+    phone?: string,
+  ) => Promise<boolean>;
   logout: () => void;
-  resetPassword: (email: string) => boolean;
+  updateProfile: (data: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+    password?: string;
+  }) => Promise<boolean>;
   isAuthenticated: boolean;
+  isAdmin: boolean;
+  error: string | null;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,7 +37,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
@@ -39,97 +47,108 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  // Charger l'utilisateur depuis localStorage au démarrage
-  const [user, setUser] = useState<UserWithoutPassword | null>(() => {
-    const savedUser = localStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Stocker les utilisateurs inscrits (simulation d'une base de données)
-  const [users, setUsers] = useState<User[]>(() => {
-    const savedUsers = localStorage.getItem("users");
-    return savedUsers
-      ? JSON.parse(savedUsers)
-      : [
-          {
-            id: 1,
-            name: "Test User",
-            email: "test@example.com",
-            password: "password",
-          },
-        ];
-  });
-
-  const login = (email: string, password: string): boolean => {
-    const foundUser = users.find(
-      (u) => u.email === email && u.password === password,
-    );
-    if (foundUser) {
-      const userWithoutPassword: UserWithoutPassword = {
-        id: foundUser.id,
-        name: foundUser.name,
-        email: foundUser.email,
-      };
-      setUser(userWithoutPassword);
-      localStorage.setItem("user", JSON.stringify(userWithoutPassword));
-      return true;
+  // Restaurer la session au démarrage
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      authApi
+        .getProfile()
+        .then((profile) => setUser(profile))
+        .catch(() => {
+          // Token expiré ou invalide
+          localStorage.removeItem('access_token');
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
-    return false;
-  };
+  }, []);
 
-  const register = (name: string, email: string, password: string): boolean => {
-    // Vérifier si l'utilisateur existe déjà
-    if (users.some((u) => u.email === email)) {
+  const login = async (email: string, password: string): Promise<boolean> => {
+    setError(null);
+    try {
+      const response = await authApi.login(email, password);
+      localStorage.setItem('access_token', response.access_token);
+      setUser(response.user);
+      return true;
+    } catch (err: any) {
+      setError(err.message || 'Erreur de connexion');
       return false;
     }
-
-    const newUser = { id: Date.now(), name, email, password };
-    const updatedUsers = [...users, newUser];
-    setUsers(updatedUsers);
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-
-    const userWithoutPassword: UserWithoutPassword = {
-      id: newUser.id,
-      name: newUser.name,
-      email: newUser.email,
-    };
-    setUser(userWithoutPassword);
-    localStorage.setItem("user", JSON.stringify(userWithoutPassword));
-    return true;
   };
 
-  const resetPassword = (email: string): boolean => {
-    const userIndex = users.findIndex((u) => u.email === email);
-    if (userIndex !== -1) {
-      // Générer un nouveau mot de passe temporaire
-      const tempPassword = Math.random().toString(36).slice(-8);
-      const updatedUsers = [...users];
-      updatedUsers[userIndex].password = tempPassword;
-      setUsers(updatedUsers);
-      localStorage.setItem("users", JSON.stringify(updatedUsers));
-
-      // Simulation d'envoi d'email
-      console.log(`Nouveau mot de passe pour ${email}: ${tempPassword}`);
-      alert(
-        `Un nouveau mot de passe temporaire a été envoyé à ${email}. Nouveau mot de passe: ${tempPassword}`,
-      );
+  const register = async (
+    firstName: string,
+    lastName: string,
+    email: string,
+    password: string,
+    phone?: string,
+  ): Promise<boolean> => {
+    setError(null);
+    try {
+      const response = await authApi.register({
+        firstName,
+        lastName,
+        email,
+        password,
+        phone,
+      });
+      localStorage.setItem('access_token', response.access_token);
+      setUser(response.user);
       return true;
+    } catch (err: any) {
+      setError(err.message || "Erreur lors de l'inscription");
+      return false;
     }
-    return false;
+  };
+
+  const updateProfile = async (data: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+    password?: string;
+  }): Promise<boolean> => {
+    if (!user) return false;
+    setError(null);
+    try {
+      const updated = await usersApi.update(user.id, data);
+      setUser((prev) => (prev ? { ...prev, ...updated } : prev));
+      return true;
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de la mise à jour du profil');
+      return false;
+    }
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("user");
+    localStorage.removeItem('access_token');
   };
-
-  const isAuthenticated = user !== null;
 
   return (
     <AuthContext.Provider
-      value={{ user, login, register, logout, resetPassword, isAuthenticated }}
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        updateProfile,
+        isAuthenticated: user !== null,
+        isAdmin: user?.role === 'ADMIN',
+        error,
+        loading,
+      }}
     >
-      {children}
+      {!loading ? children : (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+          <div>Chargement...</div>
+        </div>
+      )}
     </AuthContext.Provider>
   );
 };

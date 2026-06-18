@@ -1,45 +1,37 @@
-import React, { createContext, useContext, useState } from "react";
-import { cars } from "../data/cars";
-import { getMonth, getYear } from "date-fns";
-import type { ReactNode } from "react";
-import type { Car } from "../data/cars";
+// =====================================================
+// src/contexts/ReservationContext.tsx
+// Utilise le backend NestJS pour toutes les réservations
+// =====================================================
 
-interface Reservation {
-  id: number;
-  car: Car;
-  startDate: string;
-  endDate: string;
-  totalPrice: number;
-  status: "active" | "completed" | "cancelled";
-}
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import type { ReactNode } from 'react';
+import { bookingsApi, carsApi, type Booking, type Car } from '../services/api';
 
 interface ReservationContextType {
-  reservations: Reservation[];
-  addReservation: (car: Car, startDate: string, endDate: string) => void;
-  cancelReservation: (id: number) => void;
-  getActiveReservations: () => Reservation[];
-  getReservationHistory: () => Reservation[];
+  reservations: Booking[];
+  loading: boolean;
+  error: string | null;
+  fetchMyReservations: () => Promise<void>;
+  addReservation: (car: Car, startDate: string, endDate: string) => Promise<boolean>;
+  cancelReservation: (id: number) => Promise<boolean>;
+  getActiveReservations: () => Booking[];
+  getReservationHistory: () => Booking[];
   getDashboardStats: () => {
     monthlyReservations: Array<{ month: string; count: number }>;
     topCars: Array<{ brand: string; count: number; model: string }>;
     availability: { available: number; booked: number; total: number };
-    avgRating: number;
     totalSpent: number;
     totalCompleted: number;
   };
 }
 
-const ReservationContext = createContext<ReservationContextType | undefined>(
-  undefined,
-);
+const ReservationContext = createContext<ReservationContextType | undefined>(undefined);
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useReservations = () => {
   const context = useContext(ReservationContext);
   if (!context) {
-    throw new Error(
-      "useReservations must be used within a ReservationProvider",
-    );
+    throw new Error('useReservations must be used within a ReservationProvider');
   }
   return context;
 };
@@ -48,103 +40,118 @@ interface ReservationProviderProps {
   children: ReactNode;
 }
 
-export const ReservationProvider: React.FC<ReservationProviderProps> = ({
-  children,
-}) => {
-  const [reservations, setReservations] = useState<Reservation[]>([]);
+export const ReservationProvider: React.FC<ReservationProviderProps> = ({ children }) => {
+  const [reservations, setReservations] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const addReservation = (car: Car, startDate: string, endDate: string) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const days = Math.ceil(
-      (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+  const fetchMyReservations = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await bookingsApi.getMyBookings();
+      setReservations(data);
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors du chargement des réservations');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const addReservation = async (
+    car: Car,
+    startDate: string,
+    endDate: string,
+  ): Promise<boolean> => {
+    setError(null);
+    try {
+      const booking = await bookingsApi.create({
+        carId: car.id,
+        startDate,
+        endDate,
+      });
+      setReservations((prev) => [booking, ...prev]);
+      return true;
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de la réservation');
+      return false;
+    }
+  };
+
+  const cancelReservation = async (id: number): Promise<boolean> => {
+    setError(null);
+    try {
+      const updated = await bookingsApi.cancel(id);
+      setReservations((prev) =>
+        prev.map((r) => (r.id === id ? updated : r)),
+      );
+      return true;
+    } catch (err: any) {
+      setError(err.message || "Erreur lors de l'annulation");
+      return false;
+    }
+  };
+
+  // Réservations actives : PENDING ou CONFIRMED dont la date de fin est dans le futur
+  const getActiveReservations = () =>
+    reservations.filter(
+      (r) => r.status === 'PENDING' || r.status === 'CONFIRMED',
     );
-    const totalPrice = days * car.price;
 
-    const newReservation: Reservation = {
-      id: Date.now(),
-      car,
-      startDate,
-      endDate,
-      totalPrice,
-      status: "active",
-    };
-
-    setReservations((prev) => [...prev, newReservation]);
-  };
-
-  const cancelReservation = (id: number) => {
-    setReservations((prev) =>
-      prev.map((res) =>
-        res.id === id ? { ...res, status: "cancelled" } : res,
-      ),
-    );
-  };
-
-  const getActiveReservations = () => {
-    return reservations.filter((res) => res.status === "active");
-  };
-
-  const getReservationHistory = () => {
-    return reservations.filter((res) => res.status !== "active");
-  };
+  // Historique : CANCELLED + CONFIRMED dont la date de fin est passée
+  const getReservationHistory = () =>
+    reservations.filter((r) => r.status === 'CANCELLED');
 
   const getDashboardStats = () => {
     const active = getActiveReservations();
-    const history = getReservationHistory();
-    const allReservations = [...active, ...history];
+    const allReservations = reservations;
 
     // Réservations mensuelles
     const monthlyMap = new Map<string, number>();
     allReservations.forEach((res) => {
       const date = new Date(res.startDate);
-      const key = `${getYear(date)}-${String(getMonth(date) + 1).padStart(2, "0")}`;
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       monthlyMap.set(key, (monthlyMap.get(key) || 0) + 1);
     });
     const monthlyReservations = Array.from(monthlyMap.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([month, count]) => ({ month, count }));
 
-    // Meilleurs véhicules (marque + modèle)
-    const carMap = new Map<string, number>();
+    // Top voitures
+    const carMap = new Map<string, { count: number; model: string }>();
     allReservations.forEach((res) => {
-      const key = `${res.car.brand} ${res.car.name}`;
-      carMap.set(key, (carMap.get(key) || 0) + 1);
+      const key = `${res.car.brand} ${res.car.model}`;
+      const existing = carMap.get(key);
+      carMap.set(key, {
+        count: (existing?.count || 0) + 1,
+        model: res.car.model,
+      });
     });
     const topCars = Array.from(carMap.entries())
-      .sort((a, b) => b[1] - a[1])
+      .sort((a, b) => b[1].count - a[1].count)
       .slice(0, 5)
-      .map(([brand, count]) => ({
+      .map(([brand, info]) => ({
         brand,
-        count,
-        model: brand.split(" ")[1] || "",
+        count: info.count,
+        model: info.model,
       }));
 
-    // Disponibilité (simulation : total voitures - réservations actives)
-    const totalCars = cars.length;
-    const booked = active.length;
-    const available = totalCars - booked;
+    const totalSpent = allReservations
+      .filter((r) => r.status !== 'CANCELLED')
+      .reduce((sum, r) => sum + Number(r.totalPrice), 0);
 
-    // Avg rating
-    const avgRating =
-      allReservations.length > 0
-        ? allReservations.reduce((sum, res) => sum + res.car.rating, 0) /
-          allReservations.length
-        : 0;
-
-    const totalSpent = allReservations.reduce(
-      (sum, res) => sum + res.totalPrice,
-      0,
-    );
-    const totalCompleted = history.filter(
-      (r) => r.status === "completed",
+    const totalCompleted = allReservations.filter(
+      (r) => r.status === 'CONFIRMED',
     ).length;
 
     return {
       monthlyReservations,
       topCars,
-      availability: { available, booked, total: totalCars },
-      avgRating: Number(avgRating.toFixed(1)),
+      availability: {
+        available: 0, // sera mis à jour par les pages qui récupèrent /cars?available=true
+        booked: active.length,
+        total: allReservations.length,
+      },
       totalSpent,
       totalCompleted,
     };
@@ -154,6 +161,9 @@ export const ReservationProvider: React.FC<ReservationProviderProps> = ({
     <ReservationContext.Provider
       value={{
         reservations,
+        loading,
+        error,
+        fetchMyReservations,
         addReservation,
         cancelReservation,
         getActiveReservations,

@@ -7,12 +7,20 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(email, password)) {
+    setError("");
+    setLoading(true);
+
+    const success = await login(email, password);
+
+    setLoading(false);
+
+    if (success) {
       navigate("/dashboard");
     } else {
       setError("Email ou mot de passe incorrect");
@@ -90,11 +98,12 @@ const Login = () => {
 
           <motion.button
             type="submit"
+            disabled={loading}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white font-semibold py-4 rounded-xl hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300"
+            className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white font-semibold py-4 rounded-xl hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Se connecter
+            {loading ? "Connexion en cours..." : "Se connecter"}
           </motion.button>
         </form>
 

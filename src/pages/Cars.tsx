@@ -1,15 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { cars } from "../data/cars";
-import type { Car } from "../data/cars";
+import { carsApi, type Car as ApiCar } from "../services/api";
 import CarCard from "../components/carCard";
 import ReservationModal from "../components/ReservationModal";
 
+// Le composant CarCard et ReservationModal attendent ce format
+export interface DisplayCar {
+  id: number;
+  name: string;
+  brand: string;
+  price: number;
+  image: string;
+  rating: number;
+}
+
+// Convertit une voiture venant du backend vers le format attendu par l'UI existante
+const toDisplayCar = (car: ApiCar): DisplayCar => ({
+  id: car.id,
+  name: car.model,
+  brand: car.brand,
+  price: Number(car.pricePerDay),
+  image: car.imageUrl || "",
+  rating: 8.5, // Le backend ne fournit pas de note, valeur par défaut
+});
+
 const Cars = () => {
-  const [selectedCar, setSelectedCar] = useState<Car | null>(null);
+  const [cars, setCars] = useState<DisplayCar[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [selectedCar, setSelectedCar] = useState<DisplayCar | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleReserve = (car: Car) => {
+  useEffect(() => {
+    carsApi
+      .getAll(true) // Uniquement les voitures disponibles
+      .then((data) => setCars(data.map(toDisplayCar)))
+      .catch((err) => setError(err.message || "Erreur lors du chargement des voitures"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleReserve = (car: DisplayCar) => {
     setSelectedCar(car);
     setIsModalOpen(true);
   };
@@ -42,36 +72,63 @@ const Cars = () => {
 
         {/* Cars Grid */}
         <div className="max-w-7xl mx-auto px-4 py-16">
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
-            {cars.map((car, index) => (
-              <motion.div
-                key={car.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.4,
-                  delay: Math.min(index * 0.03, 0.5), // Délai max de 0.5s
-                }}
-                viewport={{ once: true }}
-                className="group"
-              >
+          {error && (
+            <div className="mb-8 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-center">
+              {error}
+            </div>
+          )}
+
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              {[...Array(8)].map((_, i) => (
                 <CarCard
-                  id={car.id}
-                  name={car.name}
-                  brand={car.brand}
-                  price={car.price}
-                  image={car.image}
-                  rating={car.rating}
-                  onReserve={() => handleReserve(car)}
+                  key={i}
+                  id={i}
+                  name=""
+                  brand=""
+                  price={0}
+                  image=""
+                  rating={0}
+                  isLoading
                 />
-              </motion.div>
-            ))}
-          </motion.div>
+              ))}
+            </div>
+          ) : cars.length === 0 ? (
+            <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+              Aucune voiture disponible pour le moment.
+            </div>
+          ) : (
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              {cars.map((car, index) => (
+                <motion.div
+                  key={car.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.4,
+                    delay: Math.min(index * 0.03, 0.5),
+                  }}
+                  viewport={{ once: true }}
+                  className="group"
+                >
+                  <CarCard
+                    id={car.id}
+                    name={car.name}
+                    brand={car.brand}
+                    price={car.price}
+                    image={car.image}
+                    rating={car.rating}
+                    onReserve={() => handleReserve(car)}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
 
           {/* Stats Section */}
           <motion.div

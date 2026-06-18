@@ -1,9 +1,17 @@
 import { useState } from "react";
-import type { Car } from "../data/cars";
 import { useReservations } from "../contexts/ReservationContext";
 
+interface DisplayCar {
+  id: number;
+  name: string;
+  brand: string;
+  price: number;
+  image: string;
+  rating: number;
+}
+
 interface ReservationModalProps {
-  car: Car;
+  car: DisplayCar;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -16,6 +24,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const { addReservation } = useReservations();
 
   // Obtenir la date d'aujourd'hui au format YYYY-MM-DD
@@ -24,7 +33,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     return today.toISOString().split("T")[0];
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -35,31 +44,51 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
 
     const today = new Date(getTodayDate());
     today.setHours(0, 0, 0, 0);
-    
+
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    // Vérifier que la date de début n'est pas dans le passé
     if (start < today) {
       setError("La date de début ne peut pas être dans le passé");
       return;
     }
 
-    // Vérifier que la date de fin n'est pas avant la date de début
-    if (end < start) {
+    if (end <= start) {
       setError("La date de fin doit être après la date de début");
       return;
     }
 
-    // Vérifier que la date de fin n'est pas dans le passé
-    if (end < today) {
-      setError("La date de fin ne peut pas être dans le passé");
-      return;
-    }
+    setLoading(true);
 
-    addReservation(car, startDate, endDate);
-    onClose();
-    alert("Réservation effectuée avec succès !");
+    // Le backend attend un objet "Car" complet (id, brand, model, pricePerDay...)
+    // On reconstruit un objet compatible à partir des données affichées
+    const success = await addReservation(
+      {
+        id: car.id,
+        brand: car.brand,
+        model: car.name,
+        pricePerDay: car.price,
+        year: new Date().getFullYear(),
+        transmission: "AUTOMATIQUE",
+        fuelType: "ESSENCE",
+        seats: 5,
+        imageUrl: car.image,
+        available: true,
+        createdAt: "",
+        updatedAt: "",
+      },
+      startDate,
+      endDate,
+    );
+
+    setLoading(false);
+
+    if (success) {
+      onClose();
+      alert("Réservation effectuée avec succès !");
+    } else {
+      setError("Erreur lors de la réservation. La voiture est peut-être déjà prise.");
+    }
   };
 
   if (!isOpen) return null;
@@ -132,9 +161,10 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
           <div className="flex gap-2">
             <button
               type="submit"
-              className="flex-1 bg-blue-600 dark:bg-blue-700 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 dark:hover:bg-blue-800 transition duration-300"
+              disabled={loading}
+              className="flex-1 bg-blue-600 dark:bg-blue-700 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 dark:hover:bg-blue-800 transition duration-300 disabled:opacity-50"
             >
-              Confirmer
+              {loading ? "Réservation..." : "Confirmer"}
             </button>
             <button
               type="button"

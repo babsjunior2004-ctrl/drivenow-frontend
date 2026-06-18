@@ -13,6 +13,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Reservations from "./pages/Reservations";
 import Profile from "./pages/Profile";
+import Admin from "./pages/Admin";
 import { Navigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -161,6 +162,22 @@ function App() {
                     >
                       <MainLayout>
                         <Profile />
+                      </MainLayout>
+                    </motion.div>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <motion.div
+                      initial="initial"
+                      animate="in"
+                      exit="out"
+                      variants={pageVariants}
+                      transition={pageTransition}
+                    >
+                      <MainLayout>
+                        <Admin />
                       </MainLayout>
                     </motion.div>
                   }

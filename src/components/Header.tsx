@@ -7,11 +7,10 @@ import { motion, AnimatePresence } from "framer-motion";
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
 
-  // Détection du scroll pour changer l'apparence du header
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -20,7 +19,6 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Animation pour le menu mobile
   const menuVariants = {
     closed: {
       opacity: 0,
@@ -47,7 +45,6 @@ const Header = () => {
     open: { opacity: 1, x: 0 },
   };
 
-  // Fonction pour scroller vers une section
   const handleScrollTo = (sectionId: string) => () => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -55,7 +52,6 @@ const Header = () => {
     }
   };
 
-  // Déconnexion
   const handleLogout = () => {
     logout();
     navigate("/");
@@ -74,7 +70,6 @@ const Header = () => {
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-        {/* Logo avec animation */}
         <motion.div
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -91,30 +86,37 @@ const Header = () => {
           </Link>
         </motion.div>
 
-        {/* Menu Desktop avec animations */}
         <nav className="hidden md:flex items-center space-x-10 font-medium ml-8">
-          {[
-            { to: "/", label: "Accueil", onClick: undefined },
-            { to: "/cars", label: "Notre Flotte", onClick: undefined },
-            {
-              to: "#services-section",
-              label: "Services",
-              onClick: handleScrollTo("services-section"),
-            },
-            {
-              to: "#contact-section",
-              label: "Contact",
-              onClick: handleScrollTo("contact-section"),
-            },
-            ...(isAuthenticated
-              ? [
-                  { to: "/dashboard", label: "Dashboard" },
-                  { to: "/reservations", label: "Historique" },
-                  { to: "/profile", label: "Profil" },
-                  { to: "/", label: "Déconnexion", onClick: handleLogout },
-                ]
-              : [{ to: "/register", label: "Connexion" }]),
-          ].map((item, index) => (
+          {(isAdmin
+            ? [
+                { to: "/dashboard", label: "Dashboard" },
+                { to: "/admin", label: "Administration" },
+                { to: "/profile", label: "Profil" },
+                { to: "/", label: "Déconnexion", onClick: handleLogout },
+              ]
+            : [
+                { to: "/", label: "Accueil", onClick: undefined },
+                { to: "/cars", label: "Notre Flotte", onClick: undefined },
+                {
+                  to: "#services-section",
+                  label: "Services",
+                  onClick: handleScrollTo("services-section"),
+                },
+                {
+                  to: "#contact-section",
+                  label: "Contact",
+                  onClick: handleScrollTo("contact-section"),
+                },
+                ...(isAuthenticated
+                  ? [
+                      { to: "/dashboard", label: "Dashboard" },
+                      { to: "/reservations", label: "Historique" },
+                      { to: "/profile", label: "Profil" },
+                      { to: "/", label: "Déconnexion", onClick: handleLogout },
+                    ]
+                  : [{ to: "/register", label: "Connexion" }]),
+              ]
+          ).map((item, index) => (
             <motion.div
               key={item.label}
               className="relative"
@@ -153,9 +155,7 @@ const Header = () => {
           ))}
         </nav>
 
-        {/* Boutons Desktop avec animations */}
         <div className="hidden md:flex items-center space-x-6 ml-10">
-          {/* Theme Toggle Button avec rotation */}
           <motion.button
             onClick={toggleTheme}
             className="p-3 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300"
@@ -210,7 +210,6 @@ const Header = () => {
           )}
         </div>
 
-        {/* Bouton menu mobile avec animation */}
         <div className="md:hidden flex items-center space-x-2">
           <motion.button
             onClick={toggleTheme}
@@ -276,7 +275,6 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Menu Mobile avec animations sophistiquées */}
       <AnimatePresence>
         {isOpen && (
           <motion.nav
@@ -309,6 +307,7 @@ const Header = () => {
                   ? [
                       { to: "/dashboard", label: "Dashboard" },
                       { to: "/reservations", label: "Historique" },
+
                       { to: "/profile", label: "Profil" },
                       {
                         to: "/",
@@ -352,6 +351,9 @@ const Header = () => {
                   {[
                     { to: "/dashboard", label: "Dashboard" },
                     { to: "/reservations", label: "Historique" },
+                    ...(isAdmin
+                      ? [{ to: "/admin", label: "Administration" }]
+                      : []),
                     { to: "/profile", label: "Profil" },
                     { to: "/", label: "Déconnexion", onClick: handleLogout },
                   ].map((item) => (
