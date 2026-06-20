@@ -1,73 +1,107 @@
-# React + TypeScript + Vite
+# 🚗 DriveNow — Frontend React
 
-Ce modèle fournit une configuration minimale pour faire fonctionner React dans Vite avec HMR et quelques règles ESLint.
+Application React pour la plateforme de location de voitures **DriveNow**.  
+Développé dans le cadre de l'Examen Final NestJS — Licence 2 Génie Informatique, UNIPRO Dakar.
 
-Actuellement, deux plugins officiels sont disponibles :
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) utilise [Babel](https://babeljs.io/) (ou [oxc](https://oxc.rs) lorsqu'utilisé dans [rolldown-vite](https://vite.dev/guide/rolldown)) pour le Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) utilise [SWC](https://swc.rs/) pour le Fast Refresh
+## 👥 Membres du groupe
 
-## Compilateur React
+- Babacar Junior Traore
+- Seynabou Ba
+- Jeannoth Pierroth
+- Deguène Kandji
 
-Le Compilateur React n'est pas activé dans ce modèle en raison de son impact sur les performances de développement et de construction. Pour l'ajouter, consultez [cette documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Extension de la configuration ESLint
+## 🛠️ Technologies utilisées
 
-Si vous développez une application de production, nous recommandons de mettre à jour la configuration pour activer les règles de lint conscientes des types :
+| Technologie | Rôle |
+|---|---|
+| React + TypeScript | Framework frontend |
+| Vite | Bundler |
+| Tailwind CSS | Styles |
+| Framer Motion | Animations |
+| Recharts | Graphiques |
+| React Router | Navigation |
+| Docker + Nginx | Containerisation |
+| GitHub Actions | Pipeline CI/CD |
+| Vercel | Déploiement |
 
-```js
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Autres configurations...
+---
 
-      // Supprimer tseslint.configs.recommended et remplacer par ceci
-      tseslint.configs.recommendedTypeChecked,
-      // Alternativement, utiliser ceci pour des règles plus strictes
-      tseslint.configs.strictTypeChecked,
-      // Optionnellement, ajouter ceci pour des règles stylistiques
-      tseslint.configs.stylisticTypeChecked,
+## 🚀 Installation et démarrage
 
-      // Autres configurations...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // autres options...
-    },
-  },
-]);
+### Prérequis
+- Node.js 18+
+- Backend DriveNow démarré sur `http://localhost:3000`
+
+### Étapes
+
+```bash
+# 1. Cloner le dépôt
+git clone https://github.com/babsjunior2004-ctrl/drivenow-frontend.git
+cd drivenow-frontend
+
+# 2. Installer les dépendances
+npm install
+
+# 3. Démarrer en développement
+npm run dev
+# → http://localhost:5173
 ```
 
-Vous pouvez également installer [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) et [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) pour des règles de lint spécifiques à React :
+---
 
-```js
-// eslint.config.js
-import reactX from "eslint-plugin-react-x";
-import reactDom from "eslint-plugin-react-dom";
+## 🔑 Comptes de test
 
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Autres configurations
-      // Activer les règles de lint pour React
-      reactX.configs["recommended-typescript"],
-      // Activer les règles de lint pour React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // autres options...
-    },
-  },
-]);
+| Rôle | Email | Mot de passe |
+|---|---|---|
+| ADMIN | admin@drivenow.sn | Admin123! |
+| CLIENT | Créer via l'interface | Au choix (6 car. min) |
+
+---
+
+## 📱 Pages disponibles
+
+| Page | URL | Accès |
+|---|---|---|
+| Accueil | / | Public |
+| Flotte de voitures | /cars | Public |
+| Connexion | /login | Public |
+| Inscription | /register | Public |
+| Tableau de bord | /dashboard | AUTH |
+| Réservations | /reservations | CLIENT |
+| Administration | /admin | ADMIN |
+| Profil | /profile | AUTH |
+
+---
+
+## ✅ Fonctionnalités
+
+- ✅ Authentification JWT (connexion, inscription, déconnexion)
+- ✅ Interface CLIENT — réserver, consulter, annuler
+- ✅ Interface ADMIN — stats globales, valider/refuser, gérer les voitures
+- ✅ Graphiques en temps réel (Recharts)
+- ✅ Mode sombre / clair
+- ✅ Responsive design
+- ✅ Connexion complète au backend NestJS
+- ✅ Dockerisation avec Nginx
+- ✅ Pipeline CI/CD GitHub Actions
+- ✅ Déployé sur Vercel
+
+---
+
+## 🐳 Docker
+
+```bash
+docker build -t drivenow-frontend .
+docker run -p 80:80 drivenow-frontend
 ```
+
+---
+
+## 🔗 Liens
+
+- Backend : [drivenow-backend](https://github.com/babsjunior2004-ctrl/drivenow-backend)
+- Swagger API : `http://localhost:3000/api/docs`
