@@ -60,7 +60,7 @@ const statusClass = (status: string) => {
 // TABLEAU DE BORD ADMIN — statistiques globales sur tous les clients
 // ===================================================================
 const AdminDashboard = () => {
-  const { user } = useAuth();
+  useAuth();
   const [bookings, setBookings] = useState<AllBooking[]>([]);
   const [carsCount, setCarsCount] = useState(0);
   const [usersCount, setUsersCount] = useState(0);
