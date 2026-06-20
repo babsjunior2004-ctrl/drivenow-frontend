@@ -76,7 +76,6 @@ const Admin = () => {
     }
     loadCars();
     loadBookings();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 
   const loadCars = async () => {
@@ -84,8 +83,8 @@ const Admin = () => {
     try {
       const data = await carsApi.getAll();
       setCars(data);
-    } catch (err: unknown) {
-      setCarError((err as Error).message || "Erreur lors du chargement des voitures");
+    } catch (err: any) {
+      setCarError(err.message || "Erreur lors du chargement des voitures");
     } finally {
       setCarsLoading(false);
     }
@@ -99,8 +98,8 @@ const Admin = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Erreur de chargement");
       setBookings(data);
-    } catch (err: unknown) {
-      setBookingError((err as Error).message || "Erreur lors du chargement des réservations");
+    } catch (err: any) {
+      setBookingError(err.message || "Erreur lors du chargement des réservations");
     } finally {
       setBookingsLoading(false);
     }
@@ -139,8 +138,8 @@ const Admin = () => {
       }
       await loadCars();
       resetCarForm();
-    } catch (err: unknown) {
-      setCarError((err as Error).message || "Erreur lors de l'enregistrement");
+    } catch (err: any) {
+      setCarError(err.message || "Erreur lors de l'enregistrement");
     } finally {
       setCarSaving(false);
     }
@@ -151,8 +150,8 @@ const Admin = () => {
     try {
       await carsApi.delete(id);
       await loadCars();
-    } catch (err: unknown) {
-      setCarError((err as Error).message || "Erreur lors de la suppression");
+    } catch (err: any) {
+      setCarError(err.message || "Erreur lors de la suppression");
     }
   };
 
@@ -170,8 +169,8 @@ const Admin = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Erreur lors de la mise à jour");
       await loadBookings();
-    } catch (err: unknown) {
-      setBookingError((err as Error).message || "Erreur lors de la mise à jour de la réservation");
+    } catch (err: any) {
+      setBookingError(err.message || "Erreur lors de la mise à jour de la réservation");
     }
   };
 
@@ -350,7 +349,7 @@ const Admin = () => {
                     <select
                       value={carForm.transmission}
                       onChange={(e) =>
-                        setCarForm({ ...carForm, transmission: e.target.value as "AUTOMATIQUE" | "MANUELLE" })
+                        setCarForm({ ...carForm, transmission: e.target.value as any })
                       }
                       className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-xl dark:bg-gray-700 dark:text-white"
                     >
@@ -359,7 +358,7 @@ const Admin = () => {
                     </select>
                     <select
                       value={carForm.fuelType}
-                      onChange={(e) => setCarForm({ ...carForm, fuelType: e.target.value as "ESSENCE" | "DIESEL" | "ELECTRIQUE" | "HYBRIDE" })}
+                      onChange={(e) => setCarForm({ ...carForm, fuelType: e.target.value as any })}
                       className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-xl dark:bg-gray-700 dark:text-white"
                     >
                       <option value="ESSENCE">Essence</option>

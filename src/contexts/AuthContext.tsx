@@ -64,7 +64,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         })
         .finally(() => setLoading(false));
     } else {
-      setTimeout(() => setLoading(false), 0);
+      setLoading(false);
     }
   }, []);
 
@@ -75,8 +75,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('access_token', response.access_token);
       setUser(response.user);
       return true;
-    } catch (err: unknown) {
-      setError((err as Error).message || 'Erreur de connexion');
+    } catch (err: any) {
+      setError(err.message || 'Erreur de connexion');
       return false;
     }
   };
@@ -100,8 +100,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('access_token', response.access_token);
       setUser(response.user);
       return true;
-    } catch (err: unknown) {
-      setError((err as Error).message || "Erreur lors de l'inscription");
+    } catch (err: any) {
+      setError(err.message || "Erreur lors de l'inscription");
       return false;
     }
   };
@@ -119,8 +119,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const updated = await usersApi.update(user.id, data);
       setUser((prev) => (prev ? { ...prev, ...updated } : prev));
       return true;
-    } catch (err: unknown) {
-      setError((err as Error).message || 'Erreur lors de la mise à jour du profil');
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de la mise à jour du profil');
       return false;
     }
   };

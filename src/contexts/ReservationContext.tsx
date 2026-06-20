@@ -51,8 +51,8 @@ export const ReservationProvider: React.FC<ReservationProviderProps> = ({ childr
     try {
       const data = await bookingsApi.getMyBookings();
       setReservations(data);
-    } catch (err: unknown) {
-      setError((err as Error).message || 'Erreur lors du chargement des réservations');
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors du chargement des réservations');
     } finally {
       setLoading(false);
     }
@@ -72,8 +72,8 @@ export const ReservationProvider: React.FC<ReservationProviderProps> = ({ childr
       });
       setReservations((prev) => [booking, ...prev]);
       return true;
-    } catch (err: unknown) {
-      setError((err as Error).message || 'Erreur lors de la réservation');
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de la réservation');
       return false;
     }
   };
@@ -86,8 +86,8 @@ export const ReservationProvider: React.FC<ReservationProviderProps> = ({ childr
         prev.map((r) => (r.id === id ? updated : r)),
       );
       return true;
-    } catch (err: unknown) {
-      setError((err as Error).message || "Erreur lors de l'annulation");
+    } catch (err: any) {
+      setError(err.message || "Erreur lors de l'annulation");
       return false;
     }
   };
