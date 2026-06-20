@@ -5,7 +5,7 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { bookingsApi, carsApi, type Booking, type Car } from '../services/api';
+import { bookingsApi, type Booking, type Car } from '../services/api';
 
 interface ReservationContextType {
   reservations: Booking[];

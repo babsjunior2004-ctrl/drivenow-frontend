@@ -15,7 +15,6 @@ import {
   CartesianGrid,
   Tooltip,
   Cell,
-  Legend,
 } from "recharts";
 import { carsApi, type Car as ApiCar } from "../services/api";
 import { motion } from "framer-motion";
