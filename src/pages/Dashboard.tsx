@@ -90,8 +90,8 @@ const AdminDashboard = () => {
       setBookings(bookingsData);
       setCarsCount(Array.isArray(carsData) ? carsData.length : 0);
       setUsersCount(Array.isArray(usersData) ? usersData.length : 0);
-    } catch (err: any) {
-      setError(err.message || "Erreur lors du chargement des statistiques");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Erreur lors du chargement des statistiques");
     } finally {
       setLoading(false);
     }

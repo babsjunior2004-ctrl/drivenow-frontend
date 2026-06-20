@@ -27,8 +27,8 @@ const Profile = () => {
         setSuccess("Profil mis à jour avec succès !");
         setTimeout(() => setSuccess(""), 4000);
       }
-    } catch (err: any) {
-      setError(err.message || "Erreur lors de la mise à jour du profil");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Erreur lors de la mise à jour du profil");
     } finally {
       setSaving(false);
     }
