@@ -1,10 +1,28 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { cars } from "../data/cars";
-import type { Car } from "../data/cars";
+import { useEffect } from "react";
+import { carsApi, type Car as ApiCar } from "../services/api";
 import CarCard from "../components/carCard";
 import ReservationModal from "../components/ReservationModal";
+
+interface DisplayCar {
+  id: number;
+  name: string;
+  brand: string;
+  price: number;
+  image: string;
+  rating: number;
+}
+
+const toDisplayCar = (car: ApiCar): DisplayCar => ({
+  id: car.id,
+  name: car.model,
+  brand: car.brand,
+  price: Number(car.pricePerDay),
+  image: car.imageUrl || "",
+  rating: 8.5,
+});
 // Le Footer est inclus dans MainLayout, donc pas besoin d'import
 
 // données des particules calculées une seule fois au chargement du module
@@ -25,10 +43,18 @@ const statsParticlesData = Array.from({ length: 15 }, (_, i) => ({
 }));
 
 const Landing = () => {
-  const [selectedCar, setSelectedCar] = useState<Car | null>(null);
+  const [landingCars, setLandingCars] = useState<DisplayCar[]>([]);
+
+  useEffect(() => {
+    carsApi
+      .getAll(true)
+      .then((data) => setLandingCars(data.map(toDisplayCar).slice(0, 8)))
+      .catch(() => setLandingCars([]));
+  }, []);
+  const [selectedCar, setSelectedCar] = useState<DisplayCar | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleReserve = (car: Car) => {
+  const handleReserve = (car: DisplayCar) => {
     setSelectedCar(car);
     setIsModalOpen(true);
   };
@@ -231,7 +257,7 @@ const Landing = () => {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            {cars.slice(0, 8).map((car, index) => (
+            {landingCars.map((car, index) => (
               <motion.div
                 key={car.id}
                 initial={{ opacity: 0, y: 30 }}
