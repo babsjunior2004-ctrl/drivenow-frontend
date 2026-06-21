@@ -20,7 +20,7 @@ import { carsApi, type Car as ApiCar } from "../services/api";
 import { motion } from "framer-motion";
 import AdminNav from "../components/AdminNav";
 
-const API_BASE = "http://localhost:3000/api";
+const API_BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:3000/api";
 
 function authHeaders() {
   const token = localStorage.getItem("access_token");
@@ -90,8 +90,8 @@ const AdminDashboard = () => {
       setBookings(bookingsData);
       setCarsCount(Array.isArray(carsData) ? carsData.length : 0);
       setUsersCount(Array.isArray(usersData) ? usersData.length : 0);
-    } catch (err: any) {
-      setError(err.message || "Erreur lors du chargement des statistiques");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Erreur lors du chargement des statistiques");
     } finally {
       setLoading(false);
     }
