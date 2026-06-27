@@ -3,9 +3,9 @@
 // Couche de communication avec le backend DriveNow API
 // =====================================================
 
-// Grâce au proxy Vite, on utilise une URL relative en développement.
-// En production, remplacer par l'URL complète de votre backend déployé.
-const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:3000/api';
+// En développement : proxy Vite vers localhost:3000
+// En production : VITE_API_URL doit pointer vers le backend Railway
+const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || '/api';
 
 // ---- Utilitaires ----
 

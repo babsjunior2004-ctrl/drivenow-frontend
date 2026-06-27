@@ -1,16 +1,16 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-// Configuration Vite pour le développement
+// Configuration Vite
 export default defineConfig({
-  base: "/",
+  base: '/',
   plugins: [react()],
   server: {
     port: 5173,
     proxy: {
-      // Toutes les requêtes /api/* sont redirigées vers le backend NestJS
-      "/api": {
-        target: "http://localhost:3000",
+      // En développement : toutes les requêtes /api/* → backend NestJS local
+      '/api': {
+        target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
       },
