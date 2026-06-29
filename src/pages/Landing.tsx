@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { carsApi, type Car as ApiCar } from "../services/api";
 import CarCard from "../components/carCard";
 import ReservationModal from "../components/ReservationModal";
+import WeatherWidget from "../components/WeatherWidget"; // ← AJOUT
 
 interface DisplayCar {
   id: number;
@@ -23,9 +24,7 @@ const toDisplayCar = (car: ApiCar): DisplayCar => ({
   image: car.imageUrl || "",
   rating: 8.5,
 });
-// Le Footer est inclus dans MainLayout, donc pas besoin d'import
 
-// données des particules calculées une seule fois au chargement du module
 const heroParticlesData = Array.from({ length: 50 }, (_, i) => ({
   id: i,
   left: `${Math.random() * 100}%`,
@@ -59,15 +58,13 @@ const Landing = () => {
     setIsModalOpen(true);
   };
 
-  // réutiliser les constantes définies en dehors du composant
   const heroParticles = heroParticlesData;
   const statsParticles = statsParticlesData;
 
   return (
     <>
-      {/* Hero Section Moderne */}
+      {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Fond avec image et particules animées */}
         <div className="absolute inset-0">
           <img
             src="https://plus.unsplash.com/premium_photo-1737458548419-394d86031310?q=80&w=1112&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
@@ -80,21 +77,14 @@ const Landing = () => {
               key={p.id}
               className="absolute w-1 h-1 bg-white/20 rounded-full"
               style={{ left: p.left, top: p.top }}
-              animate={{
-                y: [0, -30, 0],
-                opacity: [0.2, 0.8, 0.2],
-              }}
-              transition={{
-                duration: p.duration,
-                repeat: Infinity,
-                delay: p.delay,
-              }}
+              animate={{ y: [0, -30, 0], opacity: [0.2, 0.8, 0.2] }}
+              transition={{ duration: p.duration, repeat: Infinity, delay: p.delay }}
             />
           ))}
         </div>
 
         {/* Contenu du hero */}
-        <div className="relative z-10 text-center px-4 max-w-6xl mx-auto">
+        <div className="relative z-10 text-center px-4 max-w-6xl mx-auto w-full">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
@@ -103,14 +93,8 @@ const Landing = () => {
           >
             <motion.h1
               className="text-6xl md:text-8xl font-display font-black text-white mb-6 tracking-tight"
-              animate={{
-                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: "linear",
-              }}
+              animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
               style={{
                 background: "linear-gradient(45deg, #ffffff, #e0e7ff, #ffffff)",
                 backgroundSize: "200% 200%",
@@ -128,8 +112,7 @@ const Landing = () => {
               transition={{ duration: 0.8, delay: 0.3 }}
             >
               Découvrez l'excellence automobile avec notre service de location
-              premium. Des véhicules d'exception pour des expériences
-              inoubliables.
+              premium. Des véhicules d'exception pour des expériences inoubliables.
             </motion.p>
           </motion.div>
 
@@ -141,24 +124,17 @@ const Landing = () => {
           >
             <motion.button
               onClick={() =>
-                document
-                  .getElementById("cars-section")
-                  ?.scrollIntoView({ behavior: "smooth" })
+                document.getElementById("cars-section")?.scrollIntoView({ behavior: "smooth" })
               }
               className="bg-white text-blue-600 px-8 py-4 rounded-full font-bold text-lg hover:bg-blue-50 transition-all duration-300 shadow-2xl hover:shadow-white/25"
-              whileHover={{
-                scale: 1.05,
-                boxShadow: "0 25px 50px -12px rgba(255, 255, 255, 0.25)",
-              }}
+              whileHover={{ scale: 1.05, boxShadow: "0 25px 50px -12px rgba(255, 255, 255, 0.25)" }}
               whileTap={{ scale: 0.95 }}
             >
               Explorer nos véhicules
             </motion.button>
             <motion.button
               onClick={() =>
-                document
-                  .getElementById("services-section")
-                  ?.scrollIntoView({ behavior: "smooth" })
+                document.getElementById("services-section")?.scrollIntoView({ behavior: "smooth" })
               }
               className="border-2 border-white text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-blue-600 transition-all duration-300"
               whileHover={{ scale: 1.05 }}
@@ -167,41 +143,38 @@ const Landing = () => {
               Services
             </motion.button>
           </motion.div>
+
+          {/* ══════════════════════════════════════════════════
+              WIDGET MÉTÉO — placé sous les boutons du hero
+          ══════════════════════════════════════════════════ */}
+          <motion.div
+            className="flex justify-center mt-10"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.9 }}
+          >
+            <WeatherWidget />
+          </motion.div>
         </div>
 
         {/* Scroll indicator */}
         <motion.div
           className="absolute bottom-8 left-1/2 transform -translate-x-1/2 cursor-pointer hover:scale-110 transition-transform duration-300"
           onClick={() =>
-            document
-              .getElementById("cars-section")
-              ?.scrollIntoView({ behavior: "smooth" })
+            document.getElementById("cars-section")?.scrollIntoView({ behavior: "smooth" })
           }
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
-          <svg
-            className="w-6 h-6 text-white"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 14l-7 7m0 0l-7-7m7 7V3"
-            />
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
         </motion.div>
       </section>
 
-      {/* Cars Section Ultra Moderne */}
-      <section
-        id="cars-section"
-        className="py-32 px-4 relative overflow-hidden"
-      >
-        {/* Fond avec effet de verre */}
+      {/* Cars Section */}
+      <section id="cars-section" className="py-32 px-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-white via-gray-50 to-white dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 opacity-95"></div>
         <div
           className="absolute inset-0 opacity-20"
@@ -220,14 +193,8 @@ const Landing = () => {
           >
             <motion.h2
               className="text-5xl md:text-6xl font-display font-black text-gray-900 dark:text-white mb-6 tracking-tight"
-              animate={{
-                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: "linear",
-              }}
+              animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
               style={{
                 background: "linear-gradient(45deg, #1e40af, #7c3aed, #1e40af)",
                 backgroundSize: "200% 200%",
@@ -262,10 +229,7 @@ const Landing = () => {
                 key={car.id}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.4,
-                  delay: Math.min(index * 0.05, 0.3), // Délai max de 0.3s
-                }}
+                transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.3) }}
                 viewport={{ once: true }}
                 className="group"
               >
@@ -282,7 +246,6 @@ const Landing = () => {
             ))}
           </motion.div>
 
-          {/* Bouton Voir Plus */}
           <motion.div
             className="text-center mt-16"
             initial={{ opacity: 0, y: 30 }}
@@ -293,10 +256,7 @@ const Landing = () => {
             <Link to="/cars">
               <motion.button
                 className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
-                whileHover={{
-                  scale: 1.05,
-                  boxShadow: "0 20px 40px -12px rgba(0, 0, 0, 0.3)",
-                }}
+                whileHover={{ scale: 1.05, boxShadow: "0 20px 40px -12px rgba(0, 0, 0, 0.3)" }}
                 whileTap={{ scale: 0.95 }}
               >
                 <span className="flex items-center space-x-2">
@@ -309,12 +269,7 @@ const Landing = () => {
                     animate={{ x: [0, 3, 0] }}
                     transition={{ duration: 1.5, repeat: Infinity }}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </motion.svg>
                 </span>
               </motion.button>
@@ -323,12 +278,8 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Section Services Ultra Moderne */}
-      <section
-        id="services-section"
-        className="py-32 px-4 relative overflow-hidden"
-      >
-        {/* Fond avec effet de verre */}
+      {/* Section Services */}
+      <section id="services-section" className="py-32 px-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900 to-gray-800 dark:from-gray-950 dark:to-black"></div>
         <div
           className="absolute inset-0 opacity-30"
@@ -359,35 +310,20 @@ const Landing = () => {
               {
                 icon: "🚗",
                 title: "Location Flexible",
-                description:
-                  "Location journalière, hebdomadaire ou mensuelle avec tarifs préférentiels.",
-                features: [
-                  "Prix dégressifs",
-                  "Modification gratuite",
-                  "Annulation flexible",
-                ],
+                description: "Location journalière, hebdomadaire ou mensuelle avec tarifs préférentiels.",
+                features: ["Prix dégressifs", "Modification gratuite", "Annulation flexible"],
               },
               {
                 icon: "🛡️",
                 title: "Sécurité & Assurance",
-                description:
-                  "Protection complète et assurance tous risques pour votre tranquillité d'esprit.",
-                features: [
-                  "Assurance tous risques",
-                  "Assistance 24/7",
-                  "Véhicules certifiés",
-                ],
+                description: "Protection complète et assurance tous risques pour votre tranquillité d'esprit.",
+                features: ["Assurance tous risques", "Assistance 24/7", "Véhicules certifiés"],
               },
               {
                 icon: "⚡",
                 title: "Service Express",
-                description:
-                  "Réservation en ligne instantanée et livraison à domicile disponible.",
-                features: [
-                  "Réservation en ligne",
-                  "Livraison domicile",
-                  "Paiement sécurisé",
-                ],
+                description: "Réservation en ligne instantanée et livraison à domicile disponible.",
+                features: ["Réservation en ligne", "Livraison domicile", "Paiement sécurisé"],
               },
             ].map((service, index) => (
               <motion.div
@@ -402,20 +338,12 @@ const Landing = () => {
                 <motion.div
                   className="text-6xl mb-6"
                   animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    delay: index * 0.5,
-                  }}
+                  transition={{ duration: 2, repeat: Infinity, delay: index * 0.5 }}
                 >
                   {service.icon}
                 </motion.div>
-                <h3 className="text-2xl font-bold text-white mb-4">
-                  {service.title}
-                </h3>
-                <p className="text-gray-300 mb-6 leading-relaxed">
-                  {service.description}
-                </p>
+                <h3 className="text-2xl font-bold text-white mb-4">{service.title}</h3>
+                <p className="text-gray-300 mb-6 leading-relaxed">{service.description}</p>
                 <ul className="space-y-3">
                   {service.features.map((feature, i) => (
                     <motion.li
@@ -423,20 +351,13 @@ const Landing = () => {
                       className="flex items-center text-gray-200"
                       initial={{ opacity: 0, x: -20 }}
                       whileInView={{ opacity: 1, x: 0 }}
-                      transition={{
-                        duration: 0.4,
-                        delay: index * 0.2 + i * 0.1,
-                      }}
+                      transition={{ duration: 0.4, delay: index * 0.2 + i * 0.1 }}
                       viewport={{ once: true }}
                     >
                       <motion.div
                         className="w-2 h-2 bg-blue-400 rounded-full mr-3"
                         animate={{ scale: [1, 1.5, 1] }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          delay: i * 0.3,
-                        }}
+                        transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
                       />
                       {feature}
                     </motion.li>
@@ -448,24 +369,16 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Section Statistiques avec compteurs animés */}
+      {/* Section Statistiques */}
       <section className="py-32 px-4 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 relative overflow-hidden">
-        {/* Particules animées */}
         <div className="absolute inset-0">
           {statsParticles.map((p) => (
             <motion.div
               key={p.id}
               className="absolute w-1 h-1 bg-white/30 rounded-full"
               style={{ left: p.left, top: p.top }}
-              animate={{
-                y: [0, -30, 0],
-                opacity: [0.3, 1, 0.3],
-              }}
-              transition={{
-                duration: p.duration,
-                repeat: Infinity,
-                delay: p.delay,
-              }}
+              animate={{ y: [0, -30, 0], opacity: [0.3, 1, 0.3] }}
+              transition={{ duration: p.duration, repeat: Infinity, delay: p.delay }}
             />
           ))}
         </div>
@@ -525,7 +438,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Footer avec id pour scroll Contact */}
       <div id="contact-section"></div>
 
       {selectedCar && (
